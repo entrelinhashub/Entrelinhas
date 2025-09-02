@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrelinhas - Crie e Complete</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #FAF4E6;
+            color: #333333;
+            font-family: 'Inter', sans-serif;
+        }
+        .text-main-color {
+            color: #333333;
+        }
+        .bg-main-color {
+            background-color: #FAF4E6;
+        }
+        .btn-main {
+            background-color: #4A90E2;
+            color: white;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-main:hover {
+            background-color: #3B70C4;
+            transform: scale(1.02);
+        }
+        .btn-secondary {
+            background-color: #8E7CC3;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #7966A5;
+        }
+        .heart-icon {
+            color: #E94E77;
+        }
+        .subtle-line::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 1px;
+            background-color: #A9D3F3;
+            margin-top: 4px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #FAF4E6;
+            margin: 15% auto;
+            padding: 24px;
+            border-radius: 16px;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #drawingCanvas {
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            touch-action: none; /* Prevents default touch actions like scrolling/zooming */
+        }
+        .tab-btn.active {
+            border-bottom: 2px solid #4A90E2;
+            color: #4A90E2;
+            font-weight: bold;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4A90E2;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-main-color text-main-color">
+
+    <!-- Navbar -->
+    <header class="fixed top-0 left-0 w-full p-4 md:p-6 bg-main-color border-b border-gray-200 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div id="logo" class="font-bold text-lg cursor-pointer hover:text-blue-600 transition-colors">Entrelinhas</div>
+            <nav class="hidden md:flex space-x-6">
+                <a href="#" class="nav-link hover:text-blue-600 transition-colors" data-page="home">Página Inicial</a>
+                <a href="#" class="nav-link hover:text-blue-600 transition-colors" data-page="category" data-category="Historias">Histórias</a>
+                <a href="#" class="nav-link hover:text-blue-600 transition-colors" data-page="category" data-category="Poemas">Poemas</a>
+                <a href="#" class="nav-link hover:text-blue-600 transition-colors" data-page="category" data-category="Frases">Frases Motivacionais</a>
+                <a href="#" class="nav-link hover:text-blue-600 transition-colors" data-page="category" data-category="Piadas">Piadas</a>
+                <a href="#" class="nav-link hover:text-blue-600 transition-colors" data-page="category" data-category="Desenhos">Desenhos</a>
+            </nav>
+            <button id="donationBtn" class="bg-red-400 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-full shadow-md transition-colors">Apoie ❤️</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-24 md:py-32">
+        <div id="home-page" class="view">
+            <section class="text-center mb-16 md:mb-24">
+                <h1 class="text-3xl md:text-5xl font-bold mb-6">Entrelinhas</h1>
+                <p class="text-lg md:text-xl text-gray-600 mb-10">
+                    Onde sua criatividade encontra um final.
+                    Comece algo. Complete algo. Inspire-se.
+                </p>
+                <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <button id="createBtn" class="btn-main rounded-full py-3 px-8 shadow-md">Criar Algo</button>
+                    <button id="findHalfBtn" class="btn-main rounded-full py-3 px-8 shadow-md">Complete Algo</button>
+                    <button id="surpriseMeBtn" class="btn-main rounded-full py-3 px-8 shadow-md">Surpreenda-me</button>
+                </div>
+            </section>
+            
+            <section id="feed" class="mb-16">
+                <h2 class="text-2xl md:text-3xl font-bold mb-8 text-center">Metades Completas</h2>
+                <div id="completedPostsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Posts serão renderizados aqui via JS -->
+                </div>
+            </section>
+        </div>
+
+        <div id="category-page" class="view hidden">
+            <h2 id="categoryTitle" class="text-3xl font-bold mb-4 text-center"></h2>
+            <div class="flex justify-center space-x-4 mb-8">
+                <button id="completedTab" class="tab-btn py-2 px-4 text-lg active">Completos</button>
+                <button id="incompleteTab" class="tab-btn py-2 px-4 text-lg">Encontrar Metade</button>
+            </div>
+            <div id="categoryContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Conteúdo da categoria será renderizado aqui -->
+            </div>
+        </div>
+
+        <div id="form-page" class="view hidden">
+            <h2 id="formTitle" class="text-3xl font-bold mb-8 text-center">Criar uma Nova Metade</h2>
+            <div class="max-w-xl mx-auto p-8 rounded-2xl shadow-lg bg-white">
+                <form id="postForm">
+                    <div id="categorySelector" class="mb-6">
+                        <label for="postCategory" class="block text-sm font-medium mb-2">Categoria:</label>
+                        <select id="postCategory" class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400 outline-none transition">
+                            <option value="Historias">Histórias</option>
+                            <option value="Poemas">Poemas</option>
+                            <option value="Frases">Frases Motivacionais</option>
+                            <option value="Piadas">Piadas</option>
+                            <option value="Desenhos">Desenhos</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label for="postTitle" class="block text-sm font-medium mb-2">Título (opcional):</label>
+                        <input type="text" id="postTitle" class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400 outline-none transition" placeholder="Um título criativo...">
+                    </div>
+                    <div id="textEditor" class="mb-6">
+                        <label for="postContent" class="block text-sm font-medium mb-2">Conteúdo:</label>
+                        <textarea id="postContent" class="w-full h-40 px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400 outline-none transition" placeholder="Sua metade aqui..."></textarea>
+                    </div>
+                    <div id="drawingEditor" class="mb-6 hidden">
+                        <label class="block text-sm font-medium mb-2">Desenhe sua metade:</label>
+                        <canvas id="drawingCanvas" class="w-full max-w-full" width="500" height="300"></canvas>
+                        <div class="flex space-x-2 mt-2">
+                           <button type="button" id="clearCanvasBtn" class="py-2 px-4 rounded-md text-sm btn-secondary">Limpar</button>
+                           <input type="color" id="drawingColor" value="#333333" class="w-10 h-10 border-none rounded-md cursor-pointer">
+                        </div>
+                    </div>
+                    
+                    <div id="ideaButtons" class="flex justify-center mb-4 space-x-2">
+                        <button type="button" id="generateIdeaBtn" class="btn-secondary py-2 px-4 rounded-full">Gerar Ideia ✨</button>
+                        <div id="loadingSpinnerIdea" class="loading-spinner hidden"></div>
+                    </div>
+                    <div id="completionButtons" class="flex justify-center mb-4 space-x-2 hidden">
+                        <button type="button" id="suggestCompletionBtn" class="btn-secondary py-2 px-4 rounded-full">Sugestão ✨</button>
+                        <div id="loadingSpinnerCompletion" class="loading-spinner hidden"></div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-main w-full py-3 px-4 rounded-md shadow-md">Submeter</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal" class="modal">
+        <div class="modal-content text-center">
+            <span class="close-btn">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDoc, setDoc, updateDoc, onSnapshot, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Ativar logging para depuração
+        setLogLevel('Debug');
+
+        // Variáveis globais fornecidas pelo ambiente
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // Gemini API Configuration
+        const geminiApiKey = "";
+        const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+
+        // Inicialização do Firebase
+        let app, db, auth, userId;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            // Autenticação
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken)
+                    .then(() => {
+                        console.log("Autenticado com token customizado.");
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao autenticar com token customizado:", error);
+                        signInAnonymously(auth); // Fallback para autenticação anônima
+                    });
+            } else {
+                signInAnonymously(auth).catch((error) => console.error("Erro ao autenticar anonimamente:", error));
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Usuário autenticado. UID:", userId);
+                    document.getElementById('logo').textContent = `Entrelinhas (ID: ${userId})`;
+                    setupFirestoreListeners();
+                } else {
+                    console.log("Nenhum usuário logado.");
+                    // Crie um ID aleatório para usuários não autenticados para manter a sessão
+                    userId = crypto.randomUUID();
+                    setupFirestoreListeners();
+                }
+            });
+
+        } catch (e) {
+            console.error("Erro ao inicializar o Firebase:", e);
+        }
+
+        // Estado da UI
+        let currentView = 'home';
+        let currentCategory = 'Historias';
+        let currentPostId = null;
+
+        // Elementos da UI
+        const views = {
+            home: document.getElementById('home-page'),
+            category: document.getElementById('category-page'),
+            form: document.getElementById('form-page')
+        };
+        const completedPostsContainer = document.getElementById('completedPostsContainer');
+        const categoryContentContainer = document.getElementById('categoryContent');
+        const postForm = document.getElementById('postForm');
+        const postTitleInput = document.getElementById('postTitle');
+        const postContentInput = document.getElementById('postContent');
+        const postCategorySelect = document.getElementById('postCategory');
+        const textEditor = document.getElementById('textEditor');
+        const drawingEditor = document.getElementById('drawingEditor');
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const clearCanvasBtn = document.getElementById('clearCanvasBtn');
+        const drawingColor = document.getElementById('drawingColor');
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modalContent');
+        const closeBtn = document.querySelector('.close-btn');
+        const ideaButtons = document.getElementById('ideaButtons');
+        const completionButtons = document.getElementById('completionButtons');
+        const generateIdeaBtn = document.getElementById('generateIdeaBtn');
+        const suggestCompletionBtn = document.getElementById('suggestCompletionBtn');
+        const loadingSpinnerIdea = document.getElementById('loadingSpinnerIdea');
+        const loadingSpinnerCompletion = document.getElementById('loadingSpinnerCompletion');
+
+
+        // Contexto do desenho
+        let drawingCtx = drawingCanvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Funções do Canvas
+        function getCanvasPosition(event) {
+            const rect = drawingCanvas.getBoundingClientRect();
+            let clientX, clientY;
+            if (event.touches) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+            return {
+                x: (clientX - rect.left) * (drawingCanvas.width / rect.width),
+                y: (clientY - rect.top) * (drawingCanvas.height / rect.height)
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(lastX, lastY);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const { x, y } = getCanvasPosition(e);
+            drawingCtx.lineTo(x, y);
+            drawingCtx.strokeStyle = drawingColor.value;
+            drawingCtx.lineWidth = 2;
+            drawingCtx.lineCap = 'round';
+            drawingCtx.lineJoin = 'round';
+            drawingCtx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        drawingCanvas.addEventListener('mousedown', (e) => startDrawing(e));
+        drawingCanvas.addEventListener('mousemove', (e) => draw(e));
+        drawingCanvas.addEventListener('mouseup', stopDrawing);
+        drawingCanvas.addEventListener('mouseout', stopDrawing);
+        
+        drawingCanvas.addEventListener('touchstart', (e) => {
+            const { x, y } = getCanvasPosition(e);
+            startDrawing({ offsetX: x, offsetY: y });
+        });
+        drawingCanvas.addEventListener('touchmove', (e) => draw(e));
+        drawingCanvas.addEventListener('touchend', stopDrawing);
+
+        clearCanvasBtn.addEventListener('click', () => {
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        });
+
+        // Funções do Modal
+        function openModal(content) {
+            modalContent.innerHTML = content;
+            modal.style.display = 'block';
+        }
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        closeBtn.onclick = closeModal;
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        };
+
+        // UI de Doação
+        document.getElementById('donationBtn').addEventListener('click', () => {
+            const donationModalContent = `
+                <h3 class="text-xl md:text-2xl font-bold mb-4">Apoie o Entrelinhas ❤️</h3>
+                <p class="mb-4">Se você gosta da nossa comunidade, considere fazer uma doação para nos ajudar a manter o projeto no ar.</p>
+                <form id="donationForm">
+                    <input type="email" id="donationEmail" placeholder="Seu e-mail (opcional)" class="w-full px-4 py-2 border rounded-md mb-4">
+                    <p class="mb-4 text-sm text-gray-500">Instruções para doação via Pix, PayPal, etc. (simulado)</p>
+                    <button type="submit" class="btn-main w-full py-3 rounded-md">Enviar</button>
+                </form>
+            `;
+            openModal(donationModalContent);
+            document.getElementById('donationForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('donationEmail').value;
+                console.log(`Doação recebida. E-mail de agradecimento para: ${email || 'Usuário Anônimo'}.`);
+                closeModal();
+                openModal('<p class="font-bold text-xl">Muito obrigado pela sua doação!</p>');
+            });
+        });
+
+        // Funções de Renderização
+        function showView(viewName) {
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            views[viewName].classList.remove('hidden');
+            currentView = viewName;
+
+            if (viewName === 'form') {
+                if (currentPostId) {
+                    ideaButtons.classList.add('hidden');
+                    completionButtons.classList.remove('hidden');
+                } else {
+                    ideaButtons.classList.remove('hidden');
+                    completionButtons.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderPosts(container, posts) {
+            container.innerHTML = '';
+            if (posts.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 col-span-full">Nenhuma metade por aqui ainda.</p>`;
+                return;
+            }
+            posts.forEach(post => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between h-full';
+                let contentHTML = '';
+                if (post.category === 'Desenhos' && post.content.startsWith('data:image/png')) {
+                     contentHTML = `<img src="${post.content}" class="w-full h-auto rounded-md object-contain max-h-48" alt="Desenho colaborativo">`;
+                } else {
+                    contentHTML = `<p class="mb-4 text-gray-700 whitespace-pre-wrap">${post.content}</p>`;
+                }
+                card.innerHTML = `
+                    <div>
+                        <h3 class="text-xl font-semibold subtle-line mb-2">${post.title || 'Sem Título'}</h3>
+                        <p class="text-sm text-gray-500 mb-4">Categoria: ${post.category}</p>
+                        ${contentHTML}
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <button class="like-btn text-gray-400 hover:text-red-400 transition-colors" data-id="${post.id}">
+                            <svg class="h-6 w-6 inline-block heart-icon" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                            <span class="ml-1">${post.likes || 0}</span>
+                        </button>
+                        ${post.status === 'incomplete' ? `
+                            <button class="complete-post-btn btn-secondary text-sm rounded-full py-2 px-4" data-id="${post.id}">Completar</button>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            container.querySelectorAll('.like-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const postId = button.dataset.id;
+                    const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', postId);
+                    const postDoc = await getDoc(postRef);
+                    const newLikes = (postDoc.data().likes || 0) + 1;
+                    await updateDoc(postRef, { likes: newLikes });
+                    
+                    if (newLikes % 10 === 0) {
+                        console.log(`Notificação: Pssiu... sua metade já tem ${newLikes} curtidas ♥️ Que tal criar outra?`);
+                    }
+                });
+            });
+            container.querySelectorAll('.complete-post-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const postId = button.dataset.id;
+                    currentPostId = postId;
+                    document.getElementById('formTitle').textContent = 'Complete esta Metade';
+                    postCategorySelect.style.display = 'none';
+                    showView('form');
+                });
+            });
+        }
+
+        // Funções de Navegação
+        document.getElementById('logo').addEventListener('click', () => {
+            showView('home');
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = e.target.dataset.page;
+                if (page === 'home') {
+                    showView('home');
+                } else if (page === 'category') {
+                    currentCategory = e.target.dataset.category;
+                    document.getElementById('categoryTitle').textContent = currentCategory;
+                    document.getElementById('completedTab').click();
+                    showView('category');
+                }
+            });
+        });
+
+        document.getElementById('createBtn').addEventListener('click', () => {
+            currentPostId = null;
+            document.getElementById('formTitle').textContent = 'Criar uma Nova Metade';
+            postCategorySelect.style.display = 'block';
+            postForm.reset();
+            textEditor.classList.remove('hidden');
+            drawingEditor.classList.add('hidden');
+            postContentInput.readOnly = false;
+            showView('form');
+        });
+        
+        document.getElementById('findHalfBtn').addEventListener('click', () => {
+            document.querySelector('.nav-link[data-page="category"][data-category="Historias"]').click();
+            document.getElementById('incompleteTab').click();
+        });
+
+        document.getElementById('surpriseMeBtn').addEventListener('click', async () => {
+            if (!db) return console.error("Firebase não inicializado.");
+            const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+            const q = query(postsRef, where("status", "==", "incomplete"));
+            const querySnapshot = await getDocs(q);
+            const incompletePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            if (incompletePosts.length > 0) {
+                const randomIndex = Math.floor(Math.random() * incompletePosts.length);
+                const randomPost = incompletePosts[randomIndex];
+                currentPostId = randomPost.id;
+                document.getElementById('formTitle').textContent = 'Complete esta Metade';
+                postCategorySelect.style.display = 'none';
+                postContentInput.value = randomPost.content;
+                postContentInput.readOnly = false;
+                if (randomPost.category === 'Desenhos') {
+                    drawingEditor.classList.remove('hidden');
+                    textEditor.classList.add('hidden');
+                    const img = new Image();
+                    img.onload = () => drawingCtx.drawImage(img, 0, 0, drawingCanvas.width, drawingCanvas.height);
+                    img.src = randomPost.content;
+                } else {
+                    textEditor.classList.remove('hidden');
+                    drawingEditor.classList.add('hidden');
+                }
+                showView('form');
+            } else {
+                openModal('<p class="font-bold text-xl">Não há metades incompletas para completar no momento. Que tal criar uma?</p>');
+            }
+        });
+
+        // Lógica de Tabs da Categoria
+        document.getElementById('completedTab').addEventListener('click', () => {
+            document.getElementById('completedTab').classList.add('active');
+            document.getElementById('incompleteTab').classList.remove('active');
+            updateCategoryContent('complete');
+        });
+        document.getElementById('incompleteTab').addEventListener('click', () => {
+            document.getElementById('incompleteTab').classList.add('active');
+            document.getElementById('completedTab').classList.remove('active');
+            updateCategoryContent('incomplete');
+        });
+        
+        async function updateCategoryContent(status) {
+            const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+            const q = query(postsRef, where("status", "==", status), where("category", "==", currentCategory));
+            const querySnapshot = await getDocs(q);
+            const posts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderPosts(categoryContentContainer, posts);
+        }
+
+        // Lógica da API Gemini
+        async function callGemini(promptText, spinnerElement) {
+            spinnerElement.classList.remove('hidden');
+            const payload = {
+                contents: [{
+                    parts: [{
+                        text: promptText
+                    }]
+                }],
+            };
+            try {
+                const response = await fetch(geminiApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                spinnerElement.classList.add('hidden');
+                return result.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Erro na chamada da API Gemini:", error);
+                spinnerElement.classList.add('hidden');
+                openModal('<p class="font-bold text-xl text-red-600">Erro ao gerar conteúdo. Tente novamente.</p>');
+                return null;
+            }
+        }
+        
+        // Listener do botão "Gerar Ideia"
+        generateIdeaBtn.addEventListener('click', async () => {
+            const category = postCategorySelect.value;
+            const prompt = `Gere uma ideia criativa e original para o início de uma ${category.toLowerCase()}. Responda apenas com o texto da ideia, sem introduções ou explicações.`;
+            const generatedText = await callGemini(prompt, loadingSpinnerIdea);
+            if (generatedText) {
+                postContentInput.value = generatedText.trim();
+            }
+        });
+        
+        // Listener do botão "Sugestão"
+        suggestCompletionBtn.addEventListener('click', async () => {
+            const originalPostId = currentPostId;
+            if (!originalPostId) return;
+            const originalPostRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', originalPostId);
+            const originalPostDoc = await getDoc(originalPostRef);
+            const originalContent = originalPostDoc.data().content;
+            const category = originalPostDoc.data().category;
+            
+            let prompt;
+            if (category === 'Poemas') {
+                prompt = `A seguir, está a primeira estrofe ou verso de um poema. Por favor, continue o poema, mantendo a rima e o ritmo, se houver. Responda apenas com a continuação do poema. Conteúdo:\n\n${originalContent}`;
+            } else if (category === 'Frases') {
+                prompt = `A seguir, está a primeira parte de uma frase motivacional. Complete a frase de forma inspiradora. Responda apenas com a continuação da frase. Conteúdo:\n\n${originalContent}`;
+            } else if (category === 'Piadas') {
+                prompt = `A seguir, está a primeira parte de uma piada. Complete a piada com um desfecho engraçado. Responda apenas com a continuação da piada. Conteúdo:\n\n${originalContent}`;
+            } else {
+                prompt = `A seguir, está a primeira metade de um texto (título opcional). Por favor, continue o texto de forma criativa, mantendo o tom e o estilo. Não responda com nada além da continuação do texto. Conteúdo:\n\n${originalContent}`;
+            }
+            
+            const generatedText = await callGemini(prompt, loadingSpinnerCompletion);
+            if (generatedText) {
+                postContentInput.value = originalContent.trim() + '\n\n' + generatedText.trim();
+            }
+        });
+
+        // Lógica do Formulário de Submissão
+        postCategorySelect.addEventListener('change', (e) => {
+            if (e.target.value === 'Desenhos') {
+                drawingEditor.classList.remove('hidden');
+                textEditor.classList.add('hidden');
+            } else {
+                drawingEditor.classList.add('hidden');
+                textEditor.classList.remove('hidden');
+            }
+        });
+
+        postForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!db) return console.error("Firebase não inicializado.");
+            const category = postCategorySelect.value;
+            const title = postTitleInput.value.trim();
+            let content = postContentInput.value.trim();
+            const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+
+            if (category === 'Desenhos') {
+                content = drawingCanvas.toDataURL();
+            }
+
+            if (currentPostId) {
+                // Completar uma metade
+                const originalPostRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', currentPostId);
+                await updateDoc(originalPostRef, {
+                    content: postContentInput.value,
+                    status: 'complete',
+                });
+                console.log("Postagem completada!");
+            } else {
+                // Criar uma nova metade
+                await addDoc(postsRef, {
+                    title: title,
+                    content: content,
+                    category: category,
+                    status: 'incomplete',
+                    likes: 0,
+                    createdAt: new Date()
+                });
+                console.log("Nova metade criada!");
+            }
+            
+            // Pop-up de notificação opcional
+            const emailModalContent = `
+                <h3 class="text-xl md:text-2xl font-bold mb-4">Quase lá...</h3>
+                <p class="mb-4">Quer cadastrar seu e-mail para receber notificações quando sua metade for completada?</p>
+                <form id="emailForm">
+                    <input type="email" id="notificationEmail" placeholder="Seu e-mail (opcional)" class="w-full px-4 py-2 border rounded-md mb-4">
+                    <button type="submit" class="btn-main w-full py-3 rounded-md">Salvar E-mail</button>
+                    <button type="button" id="skipEmailBtn" class="w-full mt-2 py-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100">Não, obrigado</button>
+                </form>
+            `;
+            openModal(emailModalContent);
+
+            document.getElementById('emailForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('notificationEmail').value;
+                console.log(`E-mail para notificações cadastrado: ${email}`);
+                closeModal();
+                showView('home');
+            });
+            document.getElementById('skipEmailBtn').addEventListener('click', () => {
+                closeModal();
+                showView('home');
+            });
+        });
+
+        // Listeners do Firebase
+        function setupFirestoreListeners() {
+            if (!db) return;
+            // Listener para o feed da página inicial (metades completas mais curtidas)
+            const completedQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), where("status", "==", "complete"));
+            onSnapshot(completedQuery, (snapshot) => {
+                const posts = [];
+                snapshot.forEach(doc => {
+                    posts.push({ id: doc.id, ...doc.data() });
+                });
+                posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                renderPosts(completedPostsContainer, posts);
+            });
+        }
+    </script>
+</body>
+</html>
